@@ -17,6 +17,9 @@ struct GPS {
     std::vector<double> lat;
     std::vector<double> lon;
     std::vector<double> speed;
+
+    std::vector<double> filtered;
+    std::vector<double> route;
 };
 
 #endif //SAFETY_CALCULATION_DATA_HPP
