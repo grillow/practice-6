@@ -5,13 +5,22 @@
 #include <vector>
 #include <cmath>
 
-double deg2rad(double deg) {
-    return deg * M_PI / 180.0;
+std::vector<double> get_zones(const std::vector<double>& route, const double length) {
+    double lim = length;
+    double zone = 0;
+    std::vector<double> zones;
+
+    for (auto& r : route) {
+        if (r > lim) {
+            lim += length;
+            ++zone;
+        }
+        zones.emplace_back(zone);
+    }
+
+    return zones;
 }
 
-void gps_deg2rad(GPS& gps) {
-    for (auto &e : gps.lat) e = deg2rad(e);
-    for (auto &e : gps.lon) e = deg2rad(e);
-}
+
 
 #endif //SAFETY_CALCULATION_DATA_PROCESSING_HPP

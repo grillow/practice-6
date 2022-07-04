@@ -6,6 +6,14 @@
 #include <deque>
 #include "data.hpp"
 
+double deg2rad(double deg) {
+    return deg * M_PI / 180.0;
+}
+
+void gps_deg2rad(GPS& gps) {
+    for (auto &e : gps.lat) e = deg2rad(e);
+    for (auto &e : gps.lon) e = deg2rad(e);
+}
 
 /**
  * Формула гаверсинуса
