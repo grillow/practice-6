@@ -43,7 +43,7 @@ public:
         Accel accel;
 
         std::string line;
-        std::getline(f_accel, line);    // ignore the very first line
+//        std::getline(f_accel, line);    // ignore the very first line
         while (std::getline(f_accel, line)) {
             std::stringstream ss(line);
             std::string value;
@@ -68,7 +68,7 @@ public:
         GPS gps;
 
         std::string line;
-        std::getline(f_accel, line);    // ignore the very first line
+//        std::getline(f_accel, line);    // ignore the very first line
         while (std::getline(f_accel, line)) {
             std::stringstream ss(line);
             std::string value;
