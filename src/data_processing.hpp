@@ -173,10 +173,9 @@ SOS butter_band(const std::size_t order, const std::array<double, 2> wn) {
 std::vector<double> butter_filter(const std::vector<double>& data, const double fs, const double ffs, const std::size_t order = 4) {
     ///TODO:
     const auto wn = 2 * fs / ffs;
-    std::vector<double> result;
-//    sos = butter(order, wn, btype='low', output='sos')
-//    filtered_values = sosfilt(sos, data)
-    return result;
+    const auto sos = butter_low(order, wn);
+//    filtered = sosfilt(sos, data)
+//    return filtered;
 }
 
 /**
@@ -187,9 +186,8 @@ std::vector<double> butter_bandpass(const std::vector<double>& data, const doubl
     const auto nyq = 0.5 * fs;
     const auto low = lowcut / nyq;
     const auto high = highcut / nyq;
-//    sos = butter(order, [low, high], btype='band', output='sos')
-//    std::vector<double> filtered;
-//    filtered_values = sosfilt(sos, data)
+    const auto sos = butter_band(order, {low, high});
+//    filtered = sosfilt(sos, data)
 //    return filtered;
 }
 
