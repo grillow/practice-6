@@ -23,7 +23,7 @@ std::vector<double> get_zones(const std::vector<double>& route, const double len
     return zones;
 }
 
-// https://github.com/scipy/scipy/blob/4cf21e753cf937d1c6c2d2a0e372fbc1dbbeea81/scipy/signal/_filter_design.py#L4256
+// https://github.com/scipy/scipy/blob/4cf21e753cf937d1c6c2d2a0e372fbc1dbbeea81/scipy/signal/_filter_design.py
 struct ZPK {
     std::vector<double> z;
     std::vector<std::complex<double>> p;
@@ -162,7 +162,7 @@ SOS butter_band(const std::size_t order, const std::array<double, 2> wn) {
     return zpk2sos(zpk);
 }
 
-/*output*/void sosfilt(/*args*/) {
+/*output*/void sosfilter(/*args*/) {
     ///TODO:
 
 }
@@ -174,7 +174,7 @@ std::vector<double> butter_filter(const std::vector<double>& data, const double 
     ///TODO:
     const auto wn = 2 * fs / ffs;
     const auto sos = butter_low(order, wn);
-//    filtered = sosfilt(sos, data)
+//    filtered = sosfilter(sos, data)
 //    return filtered;
 }
 
@@ -187,7 +187,7 @@ std::vector<double> butter_bandpass(const std::vector<double>& data, const doubl
     const auto low = lowcut / nyq;
     const auto high = highcut / nyq;
     const auto sos = butter_band(order, {low, high});
-//    filtered = sosfilt(sos, data)
+//    filtered = sosfilter(sos, data)
 //    return filtered;
 }
 
