@@ -23,18 +23,18 @@ std::vector<double> get_zones(const std::vector<double>& route, const double len
     return zones;
 }
 
-std::vector<double> sosfilt(const std::vector<double>& sos, const std::vector<double>& x) {
+/*output*/void sosfilt(/*args*/) {
     ///TODO:
 
 }
 
 // https://github.com/scipy/scipy/blob/4cf21e753cf937d1c6c2d2a0e372fbc1dbbeea81/scipy/signal/_filter_design.py#L4256
-struct buttap_result {
+struct ZPK {
     std::vector<double> z;
     std::vector<std::complex<double>> p;
     double k;
 };
-buttap_result buttap(const std::size_t N) {
+ZPK buttap(const std::size_t N) {
     using namespace std::complex_literals;
 
     std::vector<std::complex<double>> p;
@@ -54,10 +54,63 @@ buttap_result buttap(const std::size_t N) {
     };
 }
 
-void butter_low_sos(const std::size_t order, const double wn) {
-    ///TODO:
-    // buttap
+ZPK lp2lp_zpk(ZPK zpk, const double wo=1.0) {
+    for (auto& z : zpk.z) {
+        z *= wo;
+    }
+    for (auto& p : zpk.p) {
+        p *= wo;
+    }
+    const auto degree = zpk.p.size() - zpk.z.size();
+    zpk.k *= std::pow(wo, static_cast<double>(degree));
 
+    return zpk;
+}
+
+ZPK bilinear_zpk(ZPK zpk, const double fs) {
+    const auto degree = zpk.p.size() - zpk.z.size();
+    const auto fs2 = 2 * fs;
+    for (auto& e : zpk.z) {
+        e = (fs2 + e) / (fs2 - e);
+    }
+    for (auto& e : zpk.p) {
+        e = (fs2 + e) / (fs2 - e);
+    }
+    zpk.z.reserve(zpk.z.size() + degree);
+    for (std::size_t i = 0; i < degree; ++i) {
+        zpk.z.emplace_back(-1.0);
+    }
+
+    double zprod = 1;
+    double pprod = 1;
+    for (const auto& e : zpk.z) {
+        zprod *= fs2 - e;
+    }
+    for (const auto& e : zpk.p) {
+        pprod *= fs2 - e.real();
+    }
+    zpk.k *= zprod / pprod;
+
+    return zpk;
+}
+
+struct SOS {
+    ///TODO:
+};
+
+SOS zpk2sos(ZPK zpk) {
+    ///TODO:
+}
+
+// btype='low', output='sos'
+SOS butter(const std::size_t order, const double wn) {
+    auto zpk = buttap(order);
+    const auto fs = 2.0;
+    const auto warped = 2 * fs * std::tan(std::numbers::pi * wn / fs);
+    zpk = lp2lp_zpk(zpk, warped);
+    zpk = bilinear_zpk(zpk, fs);
+
+    return zpk2sos(zpk);
 }
 
 /**
@@ -81,9 +134,9 @@ std::vector<double> butter_bandpass(const std::vector<double>& data, const doubl
     const auto low = lowcut / nyq;
     const auto high = highcut / nyq;
 //    sos = butter(order, [low, high], btype='band', output='sos')
-    std::vector<double> filtered;
+//    std::vector<double> filtered;
 //    filtered_values = sosfilt(sos, data)
-    return filtered;
+//    return filtered;
 }
 
 #endif //SAFETY_CALCULATION_DATA_PROCESSING_HPP
