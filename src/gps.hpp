@@ -92,11 +92,11 @@ void calculate_distance(GPS& gps) {
     }
 }
 
-std::vector<std::array<double, 4>> get_equations(std::vector<double>& time,  std::vector<double>& lat, const double acc_time) {
+std::vector<std::array<double, 4>> get_equations(std::vector<double>& time, const std::vector<double>& lat, const double acc_time) {
     std::vector<std::array<double,4>> result;
     if (acc_time < time[0]) {
         time.emplace(time.begin(), acc_time);
-        lat.emplace(time.begin(), 0);
+//        lat.emplace(time.begin(), 0);
     }
     for (std::size_t i = 1; i < time.size(); ++i) {
         if (time[i - 1] != time[i]) {
@@ -108,7 +108,7 @@ std::vector<std::array<double, 4>> get_equations(std::vector<double>& time,  std
     return result;
 }
 
-std::vector<double> get_x_dist(std::vector<double>& time, std::vector<double>& lat, const std::vector<double>& acc_time) {
+std::vector<double> get_x_dist(std::vector<double>& time, const std::vector<double>& lat, const std::vector<double>& acc_time) {
     auto equations = get_equations(time, lat, acc_time[0]);
     std::vector<double> y;
     std::size_t index = 0;
