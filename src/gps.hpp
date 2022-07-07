@@ -4,10 +4,11 @@
 #include <cmath>
 #include <vector>
 #include <deque>
+#include <numbers>
 #include "data.hpp"
 
 double deg2rad(double deg) {
-    return deg * M_PI / 180.0;
+    return deg * std::numbers::pi / 180.0;
 }
 
 void gps_deg2rad(GPS& gps) {

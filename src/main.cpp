@@ -17,14 +17,13 @@ void print_acc_info(const Accel& acc) {
 }
 
 auto main(int argc, char **argv) -> int {
-    auto reader = std::make_unique<CSVDataReader>("data/csv/small/accel.csv", "data/csv/small/gps.csv");
-
-    auto acc = reader->readAccel();
-    print_acc_info(acc);
-
-    auto gps = reader->readGPS();
-    gps_deg2rad(gps);
-
+//    auto reader = std::make_unique<CSVDataReader>("data/csv/small/accel.csv", "data/csv/small/gps.csv");
+//
+//    auto acc = reader->readAccel();
+//    print_acc_info(acc);
+//
+//    auto gps = reader->readGPS();
+//    gps_deg2rad(gps);
 
     return 0;
 }
