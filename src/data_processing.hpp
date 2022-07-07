@@ -23,11 +23,6 @@ std::vector<double> get_zones(const std::vector<double>& route, const double len
     return zones;
 }
 
-/*output*/void sosfilt(/*args*/) {
-    ///TODO:
-
-}
-
 // https://github.com/scipy/scipy/blob/4cf21e753cf937d1c6c2d2a0e372fbc1dbbeea81/scipy/signal/_filter_design.py#L4256
 struct ZPK {
     std::vector<double> z;
@@ -103,7 +98,7 @@ SOS zpk2sos(ZPK zpk) {
 }
 
 // btype='low', output='sos'
-SOS butter(const std::size_t order, const double wn) {
+SOS butter_low(const std::size_t order, const double wn) {
     auto zpk = buttap(order);
     const auto fs = 2.0;
     const auto warped = 2 * fs * std::tan(std::numbers::pi * wn / fs);
@@ -111,6 +106,11 @@ SOS butter(const std::size_t order, const double wn) {
     zpk = bilinear_zpk(zpk, fs);
 
     return zpk2sos(zpk);
+}
+
+/*output*/void sosfilt(/*args*/) {
+    ///TODO:
+
 }
 
 /**
@@ -128,7 +128,7 @@ std::vector<double> butter_filter(const std::vector<double>& data, const double 
 /**
  * Полосовой. На входе data, частота дискретизации, lowcut и highcut
  */
-std::vector<double> butter_bandpass(const std::vector<double>& data, const double fs, const double lowcut, const double highcut, auto order = 4) {
+std::vector<double> butter_bandpass(const std::vector<double>& data, const double fs, const double lowcut, const double highcut, const std::size_t order = 4) {
     ///TODO:
     const auto nyq = 0.5 * fs;
     const auto low = lowcut / nyq;
