@@ -49,7 +49,7 @@ ZPK buttap(const std::size_t N) {
     };
 }
 
-ZPK lp2lp_zpk(ZPK zpk, const double wo=1.0) {
+ZPK lp2lp_zpk(ZPK zpk, const double wo = 1.0) {
     for (auto& z : zpk.z) {
         z *= wo;
     }
@@ -58,6 +58,44 @@ ZPK lp2lp_zpk(ZPK zpk, const double wo=1.0) {
     }
     const auto degree = zpk.p.size() - zpk.z.size();
     zpk.k *= std::pow(wo, static_cast<double>(degree));
+
+    return zpk;
+}
+
+ZPK lp2bp_zpk(ZPK zpk, const double wo = 1.0, const double bw = 1.0) {
+    for (auto& z : zpk.z) {
+        z *= bw / 2;
+    }
+    for (auto& p : zpk.p) {
+        p *= bw / 2;
+    }
+
+    zpk.z.reserve(zpk.z.size() * 2);
+    const auto z_initial_size = zpk.z.size();
+    for (std::size_t i = 0; i < z_initial_size; ++i) {
+        const auto z = zpk.z[i];
+        const auto first = z + std::sqrt(z * z - wo * wo);
+        const auto second = z - std::sqrt(z * z - wo * wo);
+        zpk.z[i] = first;
+        zpk.z.emplace_back(second);
+    }
+    zpk.p.reserve(zpk.p.size() * 2);
+    const auto p_initial_size = zpk.p.size();
+    for (std::size_t i = 0; i < p_initial_size; ++i) {
+        const auto p = zpk.p[i];
+        const auto first = p + std::sqrt(p * p - wo * wo);
+        const auto second = p - std::sqrt(p * p - wo * wo);
+        zpk.p[i] = first;
+        zpk.p.emplace_back(second);
+    }
+
+    const auto degree = zpk.p.size() - zpk.z.size();
+    zpk.z.reserve(zpk.z.size() + degree);
+    for (std::size_t i = 0; i < degree; ++i) {
+        zpk.z.emplace_back(0.0);
+    }
+
+    zpk.k *= std::pow(bw, degree);
 
     return zpk;
 }
@@ -97,12 +135,28 @@ SOS zpk2sos(ZPK zpk) {
     ///TODO:
 }
 
-// btype='low', output='sos'
+// wn=wn, btype='low', output='sos'
 SOS butter_low(const std::size_t order, const double wn) {
     auto zpk = buttap(order);
     const auto fs = 2.0;
     const auto warped = 2 * fs * std::tan(std::numbers::pi * wn / fs);
     zpk = lp2lp_zpk(zpk, warped);
+    zpk = bilinear_zpk(zpk, fs);
+
+    return zpk2sos(zpk);
+}
+
+// wn=[low, high], btype='band', output='sos'
+SOS butter_band(const std::size_t order, const std::array<double, 2> wn) {
+    auto zpk = buttap(order);
+    const auto fs = 2.0;
+    const std::array<double, 2> warped = {
+        2 * fs * std::tan(std::numbers::pi * wn[0] / fs),
+        2 * fs * std::tan(std::numbers::pi * wn[1] / fs)
+    };
+    const auto bw = warped[1] - warped[0];
+    const auto wo = std::sqrt(warped[0] * warped[1]);
+    zpk = lp2bp_zpk(zpk, wo, bw);
     zpk = bilinear_zpk(zpk, fs);
 
     return zpk2sos(zpk);
