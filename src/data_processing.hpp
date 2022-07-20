@@ -127,11 +127,78 @@ ZPK bilinear_zpk(ZPK zpk, const double fs) {
     return zpk;
 }
 
-struct SOS {
-    ///TODO:
-};
+// matrix: N rows, 6 cols
+using SOS = std::vector<std::array<double, 6>>;
 
 SOS zpk2sos(ZPK zpk) {
+    ///TODO:
+    // pairing = 'nearest'
+    if (zpk.z.size() == zpk.p.size() == 0) {
+        ///TODO:
+//        return np.array([[k, 0., 0., 1., 0., 0.]])
+    }
+
+    const auto zp_max_size = std::max(zpk.z.size(), zpk.p.size());
+    zpk.z.reserve(zp_max_size);
+    zpk.p.reserve(zp_max_size);
+    for (std::size_t i = zpk.z.size(); i < zp_max_size; ++i) {
+        zpk.z.emplace_back(0);
+    }
+    for (std::size_t i = zpk.p.size(); i < zp_max_size; ++i) {
+        zpk.p.emplace_back(0);
+    }
+
+    const std::size_t n_sections = (zp_max_size + 1) / 2;
+
+    // possible optimization: reserve more size in the previous step
+    if (zpk.p.size() % 2 == 1) {
+        zpk.p.emplace_back(0);
+        zpk.z.emplace_back(0);
+    }
+
+    std::sort(zpk.z.begin(), zpk.z.end());
+
+    // might be incorrect:
+    // 1. remove numbers with negative imaginary part
+    // 2. sort first by real part, and then by magnitude of imaginary part
+    zpk.p.erase(std::remove_if(zpk.p.begin(), zpk.p.end(),
+                               [](const std::complex<double>& e){ return e.imag() < 0; }
+                               ), zpk.p.end());
+    std::sort(zpk.p.begin(), zpk.p.end(), [](const auto& left, const auto& right){
+        if (left.real() != right.real()) {
+            return left.real() < right.real();
+        }
+        return left.imag() < right.imag();
+    });
+
+    const auto idx_worst = [](const std::vector<std::complex<double>>& p) {
+        return std::distance(p.cbegin(),
+         std::min_element(p.cbegin(), p.cend(), [](const auto& left, const auto& right) {
+                return
+                     std::abs(1 - std::abs(left))
+                     <
+                     std::abs(1 - std::abs(right));
+            })
+         );
+    };
+
+    SOS sos(n_sections); // zero initialized
+
+    // [n_sections - 1 .. 0]
+    for (auto si = n_sections - 1; si >= 0; --si) {
+        const auto single_zpk2sos = [](const auto& z, const auto& p, const auto& k) {
+            ///TODO:
+        };
+
+        const auto p1_idx = idx_worst(zpk.p);
+        const auto p1 = zpk.p[p1_idx];
+        zpk.p.erase(zpk.p.begin() + p1_idx);
+
+
+
+        ///TODO:
+    }
+
     ///TODO:
 }
 
