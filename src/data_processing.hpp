@@ -6,6 +6,7 @@
 #include <cmath>
 #include <complex>
 #include <numbers>
+#include <numeric>
 
 std::vector<double> get_zones(const std::vector<double>& route, const double length) {
     double lim = length;
@@ -175,14 +176,20 @@ SOS zpk2sos(ZPK zpk) {
         return std::distance(p.cbegin(),
          std::min_element(p.cbegin(), p.cend(), [](const auto& left, const auto& right) {
                 return
-                     std::abs(1 - std::abs(left))
-                     <
-                     std::abs(1 - std::abs(right));
+                    std::abs(1 - std::abs(left))
+                    <
+                    std::abs(1 - std::abs(right));
             })
          );
     };
 
     SOS sos(n_sections); // zero initialized
+
+    std::vector<std::complex<double>> z;
+    z.reserve(zpk.z.size());
+    for (const auto& e : zpk.z) {
+        z.emplace_back(e);
+    }
 
     // [n_sections - 1 .. 0]
     for (auto si = n_sections - 1; si >= 0; --si) {
@@ -190,16 +197,150 @@ SOS zpk2sos(ZPK zpk) {
             ///TODO:
         };
 
+        const auto nearest_real_idx
+                = [](const std::vector<std::complex<double>>& fro, const std::complex<double>& to) -> std::size_t {
+            std::vector<std::size_t> order;
+            order.reserve(fro.size());
+            for (std::size_t i = 0; i < fro.size(); ++i) {
+                order.emplace_back(i);
+            }
+            std::sort(order.begin(), order.end(), [&fro, &to](std::size_t left, std::size_t right) {
+                return std::abs(fro[left] - to)
+                <
+                std::abs(fro[right] - to);
+            });
+
+            std::vector<bool> mask;
+            mask.reserve(fro.size());
+            for (const auto& e : fro) {
+                mask.emplace_back(e.imag() == 0);
+            }
+
+            std::vector<std::size_t> nonzero;
+            for (const auto& e : mask) {
+                nonzero.emplace_back(e != 0);
+            }
+
+//            return order[np.nonzero(mask)[0][0]]
+            return order[nonzero[0]];
+        };
+        const auto nearest_complex_idx
+                = [](const std::vector<std::complex<double>>& fro, const std::complex<double>& to) -> std::size_t {
+                    std::vector<std::size_t> order;
+                    order.reserve(fro.size());
+                    for (std::size_t i = 0; i < fro.size(); ++i) {
+                        order.emplace_back(i);
+                    }
+                    std::sort(order.begin(), order.end(), [&fro, &to](std::size_t left, std::size_t right) {
+                        return std::abs(fro[left] - to)
+                               <
+                               std::abs(fro[right] - to);
+                    });
+
+                    std::vector<bool> mask;
+                    mask.reserve(fro.size());
+                    for (const auto& e : fro) {
+                        mask.emplace_back(e.imag() != 0);
+                    }
+
+                    std::vector<std::size_t> nonzero;
+                    for (const auto& e : mask) {
+                        nonzero.emplace_back(e != 0);
+                    }
+
+//            return order[np.nonzero(mask)[0][0]]
+                    return order[nonzero[0]];
+                };
+        const auto nearest_any_idx
+                = [](const std::vector<std::complex<double>>& fro, const std::complex<double>& to) -> std::size_t {
+                    std::vector<std::size_t> order;
+                    order.reserve(fro.size());
+                    for (std::size_t i = 0; i < fro.size(); ++i) {
+                        order.emplace_back(i);
+                    }
+                    std::sort(order.begin(), order.end(), [&fro, &to](std::size_t left, std::size_t right) {
+                        return std::abs(fro[left] - to)
+                               <
+                               std::abs(fro[right] - to);
+                    });
+
+                    return order[0];
+                };
+
         const auto p1_idx = idx_worst(zpk.p);
         const auto p1 = zpk.p[p1_idx];
         zpk.p.erase(zpk.p.begin() + p1_idx);
 
+        const auto p_isreal_sum = std::accumulate(zpk.p.cbegin(), zpk.p.cend(), 0, [](std::size_t sum, std::complex<double> a){
+            return sum + (a.imag() == 0);
+        });
+        const auto z_isreal_sum = std::accumulate(z.cbegin(), z.cend(), 0, [](std::size_t sum, std::complex<double> a){
+            return sum + (a.imag() == 0);
+        });
+        if (p1.imag() == 0 && p_isreal_sum == 0) {
+            const auto z1_idx = nearest_real_idx(z, p1);
+            const auto z1 = z[z1_idx];
+            z.erase(z.begin() + z1_idx);
+            ///TODO:
+//            sos[si] = _single_zpksos([z1, 0], [p1, 0], 1)
+        } else if (zpk.p.size() + 1 == z.size() && p1.imag() != 0 && p_isreal_sum == 1 && z_isreal_sum == 1) {
+            const auto z1_idx = nearest_complex_idx(z, p1);
+            const auto z1 = z[z1_idx];
+            z.erase(z.begin() + z1_idx);
+            ///TODO:
+//            sos[si] = _single_zpksos([z1, z1.conj()], [p1, p1.conj()], 1)
+        } else {
+            std::size_t p2_idx;
+            std::complex<double> p2;
+            if (p1.imag() == 0) {
+                std::vector<std::size_t> prealidx;
+                std::vector<std::complex<double>> preal;
+                for (std::size_t i = 0; i < zpk.p.size(); ++i){
+                    if (zpk.p[i].imag() == 0) {
+                        prealidx.emplace_back(i);
+                        preal.emplace_back(zpk.p[i]);
+                    }
+                }
 
+                p2_idx = prealidx[idx_worst(preal)];
+                p2 = zpk.p[p2_idx];
+                zpk.p.erase(zpk.p.begin() + p2_idx);
+            } else {
+                p2 = conj(p1);
+            }
 
-        ///TODO:
+            if (!z.empty()) {
+                const auto z1_idx = nearest_any_idx(z, p1);
+                const auto z1 = z[z1_idx];
+                z.erase(z.begin() + z1_idx);
+                if (z1.imag() != 0) {
+                    ///TODO:
+//                    sos[si] = _single_zpksos([z1, z1.conj()], [p1, p2], 1)
+                } else {
+                    if (!z.empty()) {
+                        const auto z2_idx = nearest_real_idx(z, p1);
+                        const auto z2 = z[z2_idx];
+                        z.erase(z.begin() + z2_idx);
+                        ///TODO:
+//                        sos[si] = _single_zpksos([z1, z2], [p1, p2], 1)
+                    } else {
+                        ///TODO:
+//                        sos[si] = _single_zpksos([z1], [p1, p2], 1)
+                    }
+                }
+
+            } else {
+                ///TODO:
+//                sos[si] = _single_zpksos([], [p1, p2], 1)
+            }
+        }
+
     }
-
     ///TODO:
+//    del p, z
+//# put gain in first sos
+//    sos[0][:3] *= k
+    return sos;
 }
 
 // wn=wn, btype='low', output='sos'
