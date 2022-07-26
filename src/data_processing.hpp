@@ -194,7 +194,20 @@ SOS zpk2sos(ZPK zpk) {
     // [n_sections - 1 .. 0]
     for (auto si = n_sections - 1; si >= 0; --si) {
         const auto single_zpk2sos = [](const auto& z, const auto& p, const auto& k) {
+            const auto poly = [](const std::vector<std::complex<double>>& vec) {
+                ///TODO:
+            };
+
+            std::vector<double> sos(6);
+
             ///TODO:
+            // b, a = zpk2tf(z, p, k)
+            // sos = [b, a]
+
+            // b = k * poly(z)
+            // a = poly(p)
+
+            return sos;
         };
 
         const auto nearest_real_idx
@@ -221,7 +234,6 @@ SOS zpk2sos(ZPK zpk) {
                 nonzero.emplace_back(e != 0);
             }
 
-//            return order[np.nonzero(mask)[0][0]]
             return order[nonzero[0]];
         };
         const auto nearest_complex_idx
@@ -248,7 +260,6 @@ SOS zpk2sos(ZPK zpk) {
                         nonzero.emplace_back(e != 0);
                     }
 
-//            return order[np.nonzero(mask)[0][0]]
                     return order[nonzero[0]];
                 };
         const auto nearest_any_idx
@@ -337,7 +348,6 @@ SOS zpk2sos(ZPK zpk) {
 
     }
     ///TODO:
-//    del p, z
 //# put gain in first sos
 //    sos[0][:3] *= k
     return sos;
